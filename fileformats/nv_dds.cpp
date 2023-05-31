@@ -177,8 +177,14 @@ bool CDDSImage::load(string filename, bool flipImage, bool RGB2RGBA)
   std::cout << "Found a file" << std::endl;
 
   // read in file marker, make sure its a DDS file
-  char filecode[4];
-  fread(filecode, 1, 4, fp);
+  char   filecode[4];
+  size_t read_n = fread(filecode, 1, 4, fp);
+  if(read_n != 4)
+  {
+    std::cerr << "Tried to read 4 bytes but got only " << read_n << std::endl;
+    fclose(fp);
+    return false;
+  }
   if(strncmp(filecode, "DDS ", 4) != 0)
   {
     fclose(fp);
@@ -189,7 +195,13 @@ bool CDDSImage::load(string filename, bool flipImage, bool RGB2RGBA)
 
   // read in DDS header
   DDS_HEADER ddsh;
-  fread(&ddsh, sizeof(DDS_HEADER), 1, fp);
+  read_n = fread(&ddsh, sizeof(DDS_HEADER), 1, fp);
+  if(read_n != 1)
+  {
+    std::cerr << "Tried to read 4 bytes but got only " << read_n << std::endl;
+    fclose(fp);
+    return false;
+  }
 
   swap_endian(&ddsh.dwSize);
   swap_endian(&ddsh.dwFlags);
@@ -310,8 +322,14 @@ bool CDDSImage::load(string filename, bool flipImage, bool RGB2RGBA)
       // calculate again the amount of data to load and surface size
       size = (this->*sizefunc)(width, height) * depth;
       // load surface
-      pixels = new unsigned char[size];
-      fread(pixels, 1, szRGB * 3, fp);
+      pixels        = new unsigned char[size];
+      size_t read_n = fread(pixels, 1, szRGB * 3, fp);
+      if(read_n != szRGB * 3)
+      {
+        std::cerr << "Tried to read 3 * " << szRGB << " elements but got only " << read_n << std::endl;
+        fclose(fp);
+        return false;
+      }
       for(int i = szRGB - 1; i > 0; i--)
       {
         pixels[(i * 4) + 3] = 0;
@@ -323,8 +341,14 @@ bool CDDSImage::load(string filename, bool flipImage, bool RGB2RGBA)
     else
     {
       // load surface
-      pixels = new unsigned char[size];
-      fread(pixels, 1, size, fp);
+      pixels        = new unsigned char[size];
+      size_t read_n = fread(pixels, 1, size, fp);
+      if(read_n != size)
+      {
+        std::cerr << "Tried to read " << size << " elements but got only " << read_n << std::endl;
+        fclose(fp);
+        return false;
+      }
     }
 
     img.create(width, height, depth, size, pixels);
@@ -366,8 +390,14 @@ bool CDDSImage::load(string filename, bool flipImage, bool RGB2RGBA)
         // calculate again the amount of data to load and surface size
         size = (this->*sizefunc)(width, height) * depth;
         // load surface
-        pixels = new unsigned char[size];
-        fread(pixels, 1, szRGB * 3, fp);
+        pixels        = new unsigned char[size];
+        size_t read_n = fread(pixels, 1, szRGB * 3, fp);
+        if(read_n != szRGB * 3)
+        {
+          std::cerr << "Tried to read 3 * " << szRGB << " elements but got only " << read_n << std::endl;
+          fclose(fp);
+          return false;
+        }
         for(int i = szRGB - 1; i > 0; i--)
         {
           pixels[(i * 4) + 3] = 0;
@@ -379,8 +409,14 @@ bool CDDSImage::load(string filename, bool flipImage, bool RGB2RGBA)
       else
       {
         // load surface
-        pixels = new unsigned char[size];
-        fread(pixels, 1, size, fp);
+        pixels        = new unsigned char[size];
+        size_t read_n = fread(pixels, 1, size, fp);
+        if(read_n != size)
+        {
+          std::cerr << "Tried to read " << size << " elements but got only " << read_n << std::endl;
+          fclose(fp);
+          return false;
+        }
       }
 
       mipmap.create(w, h, d, size, pixels);
