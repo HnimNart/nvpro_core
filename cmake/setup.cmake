@@ -93,7 +93,7 @@ else ()
 endif()
 
 if(NOT OUTPUT_PATH)
-  set(OUTPUT_PATH ${BASE_DIRECTORY}/bin_${ARCH} CACHE PATH "Directory where outputs will be stored")
+    set(OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}/bin_${ARCH} CACHE PATH "Directory where outputs will be stored")
 endif()
 
 # Set the default build to Release.  Note this doesn't do anything for the VS

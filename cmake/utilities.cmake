@@ -304,9 +304,10 @@ function(compile_glsl_directory)
     )
 
   # Collecting headers for dependencies
+  set (GLSL_INCLUDE_DIR "${COMPILE_SRC}/../include")
   file(GLOB GLSL_HEADER_FILES
-    "${COMPILE_SRC}/*.glsl"     # Auto detect - used for header
-    "${COMPILE_SRC}/*.h"
+    "${COMPILE_SRC}/../include/*.glsl"     # Auto detect - used for header
+    "${COMPILE_SRC}/../include/*.h"
     )
 
   # By default use Vulkan 1.1
@@ -321,7 +322,7 @@ function(compile_glsl_directory)
 
   # If no flag set -g (debug)
   if(NOT DEFINED COMPILE_FLAGS)
-    set(COMPILE_FLAGS -g)
+    set(COMPILE_FLAGS -g -I${GLSL_INCLUDE_DIR})
   endif()
 
   # Compiling all GLSL
