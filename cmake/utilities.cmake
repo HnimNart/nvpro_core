@@ -38,7 +38,7 @@ function(target_copy_to_output_dir)
                 TARGET ${TARGET_COPY_TO_OUTPUT_DIR_TARGET} POST_BUILD
                 COMMAND ${CMAKE_COMMAND} -E copy_directory ${_SOURCE_FILE} $<TARGET_FILE_DIR:${TARGET_COPY_TO_OUTPUT_DIR_TARGET}>/${TARGET_COPY_TO_OUTPUT_DIR_DEST_SUBFOLDER}${_FOLDER_PATH}
             )
-        else()   
+        else()
             if(MDL_LOG_FILE_DEPENDENCIES)
                 MESSAGE(STATUS "- file to copy:   ${_SOURCE_FILE}")
             endif()
@@ -64,10 +64,10 @@ endfunction()
 #  SOURCE_DIR  : folder on server, if not present 'scenes'
 #
 # Examples:
-# download_files(FILENAMES sample1.zip EXTRACT) 
+# download_files(FILENAMES sample1.zip EXTRACT)
 # download_files(FILENAMES env.hdr)
-# download_files(FILENAMES zlib.zip EXTRACT TARGET_DIR ${BASE_DIRECTORY}/blah SOURCE_DIR libraries NOINSTALL) 
-# 
+# download_files(FILENAMES zlib.zip EXTRACT TARGET_DIR ${BASE_DIRECTORY}/blah SOURCE_DIR libraries NOINSTALL)
+#
 function(download_files)
   set(options EXTRACT NOINSTALL)
   set(oneValueArgs INSTALL_DIR SOURCE_DIR TARGET_DIR)
@@ -86,12 +86,12 @@ function(download_files)
 
   # Check each file to download
   foreach(FILENAME ${DOWNLOAD_FILES_FILENAMES})
-   
+
     set(TARGET_FILENAME ${DOWNLOAD_FILES_TARGET_DIR}/${FILENAME})
     if(NOT EXISTS ${TARGET_FILENAME})
       message(STATUS "Downloading ${DOWNLOAD_SITE}/${FILENAME} to ${TARGET_FILENAME}")
       file(DOWNLOAD ${DOWNLOAD_SITE}${DOWNLOAD_FILES_SOURCE_DIR}/${FILENAME} ${TARGET_FILENAME} SHOW_PROGRESS)
-  
+
       # Extracting the ZIP file
 	    if(DOWNLOAD_FILES_EXTRACT)
 		    execute_process(COMMAND ${CMAKE_COMMAND} -E tar -xf ${TARGET_FILENAME}
@@ -218,7 +218,7 @@ function(compile_glsl)
     if(COMPILE_DEPENDENCY)
         get_glsl_dependencies(SRC ${GLSL_SRC} FLAGS ${COMPILE_FLAGS})
     else()
-      set(GLSL_DEPENDENCY ${HEADER_FILES}) 
+      set(GLSL_DEPENDENCY ${HEADER_FILES})
     endif()
 
     # Default compiler command, always adding debug information (Add and option to opt-out?)
@@ -233,14 +233,14 @@ function(compile_glsl)
     else()
         set(GLSL_OUT "${COMPILE_DST}/${FILE_NAME}.spv")
         list(APPEND _SPVS ${GLSL_OUT})
-    endif() 
+    endif()
 
 
     # Appending the output name and the file source
     list(APPEND COMPILE_CMD  -o ${GLSL_OUT} ${GLSL_SRC} )
 
     # The custom command is added to the build system, check for the presence of the output
-    # but also for changes done in GLSL headers 
+    # but also for changes done in GLSL headers
     add_custom_command(
          PRE_BUILD
          OUTPUT ${GLSL_OUT}
@@ -252,7 +252,7 @@ function(compile_glsl)
       )
   endforeach()
 
-  # Setting OUT variables 
+  # Setting OUT variables
   set(GLSL_SOURCES ${COMPILE_SOURCE_FILES} PARENT_SCOPE)
   set(GLSL_HEADERS ${COMPILE_HEADER_FILES} PARENT_SCOPE)
   set(SPV_OUTPUT ${_SPVS} PARENT_SCOPE)
@@ -270,12 +270,12 @@ endfunction()
 # DST : The destination directory (need to be absolute)
 # VULKAN_TARGET : to define the vulkan target i.e vulkan1.2 (default vulkan1.1)
 # HEADER ON: if present, will generate headers instead of binary Spir-V files
-# DEPENDENCY : ON|OFF will create the list of dependencies for the GLSL source file 
-# FLAGS : other glslValidator flags 
+# DEPENDENCY : ON|OFF will create the list of dependencies for the GLSL source file
+# FLAGS : other glslValidator flags
 #
 # compile_glsl_directory(
-#    SRC "${CMAKE_CURRENT_SOURCE_DIR}/shaders" 
-#    DST "${CMAKE_CURRENT_SOURCE_DIR}/autogen" 
+#    SRC "${CMAKE_CURRENT_SOURCE_DIR}/shaders"
+#    DST "${CMAKE_CURRENT_SOURCE_DIR}/autogen"
 #    VULKAN_TARGET "vulkan1.2"
 #    HEADER ON
 #    )
@@ -287,27 +287,28 @@ function(compile_glsl_directory)
 
     # Collecting all source files
   file(GLOB GLSL_SOURCE_FILES
-    "${COMPILE_SRC}/*.comp"     # Compute
-    "${COMPILE_SRC}/*.frag"     # Fragment
-    "${COMPILE_SRC}/*.geom"     # Geometry
-    "${COMPILE_SRC}/*.mesh"     # Mesh
-    "${COMPILE_SRC}/*.rahit"    # Ray any hit
-    "${COMPILE_SRC}/*.rcall"    # Ray callable
-    "${COMPILE_SRC}/*.rchit"    # Ray closest hit
-    "${COMPILE_SRC}/*.rgen"     # Ray generation
-    "${COMPILE_SRC}/*.rint"     # Ray intersection
-    "${COMPILE_SRC}/*.rmiss"    # Ray miss
-    "${COMPILE_SRC}/*.task"     # Task
-    "${COMPILE_SRC}/*.tesc"     # Tessellation control
-    "${COMPILE_SRC}/*.tese"     # Tessellation evaluation
-    "${COMPILE_SRC}/*.vert"     # Vertex
+    "${COMPILE_SRC}/raster/*.comp"     # Compute
+    "${COMPILE_SRC}/raster/*.frag" # Fragment
+    "${COMPILE_SRC}/raster/*.geom"      # Geometry
+    "${COMPILE_SRC}/raster/*.mesh"     # Mesh
+    "${COMPILE_SRC}/raster/*.task"     # Task
+    "${COMPILE_SRC}/raster/*.tesc"     # Tessellation control
+    "${COMPILE_SRC}/raster/*.tese"     # Tessellation evaluation
+    "${COMPILE_SRC}/raster/*.vert"     # Vertex
+
+    "${COMPILE_SRC}/raytrace/*.rahit"    # Ray any hit
+    "${COMPILE_SRC}/raytrace/*.rcall"    # Ray callable
+    "${COMPILE_SRC}/raytrace/*.rchit"    # Ray closest hit
+    "${COMPILE_SRC}/raytrace/*.rgen"     # Ray generation
+    "${COMPILE_SRC}/raytrace/*.rint"     # Ray intersection
+    "${COMPILE_SRC}/raytrace/*.rmiss"    # Ray miss
     )
 
   # Collecting headers for dependencies
-  set (GLSL_INCLUDE_DIR "${COMPILE_SRC}/../include")
+  set (GLSL_INCLUDE_DIR "${COMPILE_SRC}/include")
   file(GLOB GLSL_HEADER_FILES
-    "${COMPILE_SRC}/../include/*.glsl"     # Auto detect - used for header
-    "${COMPILE_SRC}/../include/*.h"
+    "${COMPILE_SRC}/include/*.glsl"     # Auto detect - used for header
+    "${COMPILE_SRC}/include/*.h"
     )
 
   # By default use Vulkan 1.1
@@ -326,18 +327,197 @@ function(compile_glsl_directory)
   endif()
 
   # Compiling all GLSL
-  compile_glsl(SOURCE_FILES ${GLSL_SOURCE_FILES} 
-               HEADER_FILES ${GLSL_HEADER_FILES}  
-               DST ${COMPILE_DST} 
-               VULKAN_TARGET ${COMPILE_VULKAN_TARGET} 
+  compile_glsl(SOURCE_FILES ${GLSL_SOURCE_FILES}
+               HEADER_FILES ${GLSL_HEADER_FILES}
+               DST ${COMPILE_DST}
+               VULKAN_TARGET ${COMPILE_VULKAN_TARGET}
                HEADER ${COMPILE_HEADER}
                DEPENDENCY ${COMPILE_DEPENDENCY}
                FLAGS ${COMPILE_FLAGS}
                )
 
-  # Setting OUT variables 
+  # Setting OUT variables
   set(GLSL_SOURCES ${GLSL_SOURCE_FILES} PARENT_SCOPE)
   set(GLSL_HEADERS ${GLSL_HEADER_FILES} PARENT_SCOPE)
   set(SPV_OUTPUT ${SPV_OUTPUT} PARENT_SCOPE) # propagate value set in compile_glsl
 endfunction()
 
+#------------------------------------------------------------------------------------
+# Function to compile all HLSL source files to Spir-V
+#
+# SOURCE_FILES : List of sources to compile
+# HEADER_FILES : List of dependency header files
+# DST : The destination directory (need to be absolute)
+# VULKAN_TARGET : to define the vulkan target i.e vulkan1.2 (default vulkan1.1)
+# HEADER ON: if ON, will generate headers instead of binary Spir-V files
+# DEPENDENCY : ON|OFF will create the list of dependencies for the HLSL source file
+# FLAGS: List of compile flags
+#
+# compile_glsl(
+#   SOURCES_FILES foo.vert foo.frag
+#   DST ${CMAKE_CURRENT_SOURCE_DIR}/shaders
+#   FLAGS -g0
+# )
+
+function(compile_hlsl)
+  set(oneValueArgs DST VULKAN_TARGET DXC_TARGET HEADER DEPENDENCY)
+  set(multiValueArgs SOURCE_FILES HEADER_FILES FLAGS)
+  cmake_parse_arguments(COMPILE  "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN} )
+
+  # Check if the HLSL compiler is present
+  if(NOT DIRECTXCOMPILER)
+    message(ERROR "Could not find DIRECTXCOMPILER to compile shaders")
+    return()
+  endif()
+
+  # By default use Vulkan 1.1
+  if(NOT DEFINED COMPILE_VULKAN_TARGET)
+    set(COMPILE_VULKAN_TARGET vulkan1.1)
+  endif()
+
+  # By default use Vulkan 1.1
+  if(NOT DEFINED COMPILE_DXC_TARGET)
+    set(COMPILE_DXC_TARGET 6_0)
+  endif()
+
+  # If destination is not present, same as source
+  if(NOT DEFINED COMPILE_DST)
+    message(ERROR " --- DST not defined")
+    return()
+  endif()
+
+  # Make the output directory if needed
+  file(MAKE_DIRECTORY ${COMPILE_DST})
+
+  # If no flag set -g (debug)
+  if(NOT DEFINED COMPILE_FLAGS)
+    set(COMPILE_FLAGS -spirv)
+  endif()
+
+  # Compiling all HLSL sources
+  foreach(HLSL_SRC ${COMPILE_SOURCE_FILES})
+
+    # Find the dependency files for the HLSL source
+    # or use all headers as dependencies.
+    # if(COMPILE_DEPENDENCY)
+    #     get_glsl_dependencies(SRC ${HLSL_SRC} FLAGS ${COMPILE_FLAGS})
+    # else()
+    #   set(HLSL_DEPENDENCY ${HEADER_FILES})
+    # endif()
+
+    set(HLSL_DEPENDENCY ${HLSL_SRC})
+
+    # Default compiler command, always adding debug information (Add and option to opt-out?)
+    set(COMPILE_CMD  ${COMPILE_FLAGS} -fspv-target-env=${COMPILE_VULKAN_TARGET})
+
+    # Compilation to headers need a variable name, the output will be a .h
+    get_filename_component(FILE_NAME ${HLSL_SRC} NAME)
+    get_filename_component(EXTENSION ${FILE_NAME} EXT)
+    if(COMPILE_HEADER)
+        STRING(REPLACE "." "_" VAR_NAME ${FILE_NAME}) # Name of the variable in the header
+        list(APPEND COMPILE_CMD  --vn ${VAR_NAME})
+        set(HLSL_OUT "${COMPILE_DST}/${FILE_NAME}.h")
+    else()
+        set(HLSL_OUT "${COMPILE_DST}/${FILE_NAME}.spv")
+        list(APPEND _SPVS ${HLSL_OUT})
+    endif()
+
+    if("${EXTENSION}" STREQUAL ".vert")
+      list(APPEND COMPILE_CMD -T vs_${COMPILE_DXC_TARGET})
+    elseif("${EXTENSION}" STREQUAL ".frag")
+      list(APPEND COMPILE_CMD -T ps_${COMPILE_DXC_TARGET})
+    endif()
+
+    # Appending the output name and the file source
+    list(APPEND COMPILE_CMD -Fo ${HLSL_OUT} ${HLSL_SRC} -E main)
+
+    MESSAGE(STATUS "########################### ${COMPILE_CMD}")
+    # The custom command is added to the build system, check for the presence of the output
+    # but also for changes done in HLSL headers
+    add_custom_command(
+         PRE_BUILD
+         OUTPUT ${HLSL_OUT}
+         COMMAND echo ${DIRECTXCOMPILER} ${COMPILE_CMD}
+         COMMAND ${DIRECTXCOMPILER} ${COMPILE_CMD}
+         MAIN_DEPENDENCY ${HLSL_SRC}
+         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+         DEPENDS ${HLSL_DEPENDENCY}
+      )
+  endforeach()
+
+  # Setting OUT variables
+  set(HLSL_SOURCES ${COMPILE_SOURCE_FILES} PARENT_SCOPE)
+  set(HLSL_HEADERS ${COMPILE_HEADER_FILES} PARENT_SCOPE)
+  set(HLSL_SPV_OUTPUT ${_SPVS} PARENT_SCOPE)
+
+endfunction()
+
+
+
+
+function(compile_hlsl_directory)
+  set(oneValueArgs SRC DST VULKAN_TARGET DXC_TARGET HEADER DEPENDENCY FLAGS)
+  set(multiValueArgs)
+  cmake_parse_arguments(COMPILE  "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN} )
+
+    # Collecting all source files
+  file(GLOB HLSL_SOURCE_FILES
+    "${COMPILE_SRC}/*.comp"     # Compute
+    "${COMPILE_SRC}/*.frag"     # Fragment
+    "${COMPILE_SRC}/*.geom"     # Geometry
+    "${COMPILE_SRC}/*.mesh"     # Mesh
+    "${COMPILE_SRC}/*.task"     # Task
+    "${COMPILE_SRC}/*.tesc"     # Tessellation control
+    "${COMPILE_SRC}/*.tese"     # Tessellation evaluation
+    "${COMPILE_SRC}/*.vert"     # Vertex
+    "${COMPILE_SRC}/*.rahit"    # Ray any hit
+    "${COMPILE_SRC}/*.rcall"    # Ray callable
+    "${COMPILE_SRC}/*.rchit"    # Ray closest hit
+    "${COMPILE_SRC}/*.rgen"     # Ray generation
+    "${COMPILE_SRC}/*.rint"     # Ray intersection
+    "${COMPILE_SRC}/*.rmiss"    # Ray miss
+    )
+
+  # Collecting headers for dependencies
+  set (HLSL_INCLUDE_DIR "${COMPILE_SRC}/include")
+  file(GLOB HLSL_HEADER_FILES
+    "${COMPILE_SRC}/include/*.hlsl"     # Auto detect - used for header
+    "${COMPILE_SRC}/include/*.h"
+    )
+
+  # By default use Vulkan 1.1
+  if(NOT DEFINED COMPILE_VULKAN_TARGET)
+    set(COMPILE_VULKAN_TARGET vulkan1.1)
+  endif()
+
+  # By default use 6_0
+  if(NOT DEFINED COMPILE_DXC_TARGET)
+    set(COMPILE_DXC_TARGET 6_0)
+  endif()
+
+  # If destination is not present, same as source
+  if(NOT DEFINED COMPILE_DST)
+    set(COMPILE_DST ${COMPILE_SRC})
+  endif()
+
+  # If no flag set -g (debug)
+  if(NOT DEFINED COMPILE_FLAGS)
+    set(COMPILE_FLAGS -spirv -I${HLSL_INCLUDE_DIR})
+  endif()
+
+  # Compiling all HLSL
+  compile_hlsl(SOURCE_FILES ${HLSL_SOURCE_FILES}
+               HEADER_FILES ${HLSL_HEADER_FILES}
+               DST ${COMPILE_DST}
+               VULKAN_TARGET ${COMPILE_VULKAN_TARGET}
+               DXC_TARGET ${COMPILE_DXC_TARGET}
+               HEADER ${COMPILE_HEADER}
+               DEPENDENCY ${COMPILE_DEPENDENCY}
+               FLAGS ${COMPILE_FLAGS}
+               )
+
+  # Setting OUT variables
+  set(HLSL_SOURCES ${HLSL_SOURCE_FILES} PARENT_SCOPE)
+  set(HLSL_HEADERS ${HLSL_HEADER_FILES} PARENT_SCOPE)
+  set(HLSL_SPV_OUTPUT ${HLSL_SPV_OUTPUT} PARENT_SCOPE) # propagate value set in compile_glsl
+endfunction()
