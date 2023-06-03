@@ -144,7 +144,10 @@ VKAPI_ATTR VkBool32 VKAPI_CALL Context::debugMessengerCallback(VkDebugUtilsMessa
   }
   else if(messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT)
   {
-    nvprintfLevel(level, "INFO: %s \n --> %s\n", callbackData->pMessageIdName, callbackData->pMessage);
+    std::string clean_msg = callbackData->pMessage;
+    clean_msg             = clean_msg.substr(clean_msg.find_last_of('|') + 1);
+    LOGI("%s", clean_msg.c_str());  // <- This will end up in the Logger
+    // nvprintfLevel(level, "INFO: %s \n --> %s\n", callbackData->pMessageIdName, callbackData->pMessage);
   }
   else if(messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT)
   {
@@ -167,7 +170,7 @@ VKAPI_ATTR VkBool32 VKAPI_CALL Context::debugMessengerCallback(VkDebugUtilsMessa
 
   // this seems redundant with the info already in callbackData->pMessage
 #if 0
-  
+
   if(callbackData->objectCount > 0)
   {
     for(uint32_t object = 0; object < callbackData->objectCount; ++object)
@@ -312,13 +315,22 @@ bool Context::initInstance(const ContextCreateInfo& info)
     usedInstanceLayers.push_back(it.c_str());
   }
 
+
+  // Enable debugprintf
+  VkValidationFeatureEnableEXT enables[] = {VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT};
+  VkValidationFeaturesEXT      features  = {};
+  features.sType                         = VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT;
+  features.enabledValidationFeatureCount = 1;
+  features.pEnabledValidationFeatures    = enables;
+
   VkInstanceCreateInfo instanceCreateInfo{VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO};
   instanceCreateInfo.pApplicationInfo        = &applicationInfo;
   instanceCreateInfo.enabledExtensionCount   = static_cast<uint32_t>(usedInstanceExtensions.size());
   instanceCreateInfo.ppEnabledExtensionNames = usedInstanceExtensions.data();
   instanceCreateInfo.enabledLayerCount       = static_cast<uint32_t>(usedInstanceLayers.size());
   instanceCreateInfo.ppEnabledLayerNames     = usedInstanceLayers.data();
-  instanceCreateInfo.pNext                   = info.instanceCreateInfoExt;
+  instanceCreateInfo.pNext                   = &features;
+
 
   NVVK_CHECK(vkCreateInstance(&instanceCreateInfo, nullptr, &m_instance));
 
@@ -1003,15 +1015,17 @@ void Context::initDebugUtils()
       (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(m_instance, "vkDestroyDebugUtilsMessengerEXT");
   // Create a Debug Utils Messenger that will trigger our callback for any warning
   // or error.
+
   if(m_createDebugUtilsMessengerEXT != nullptr)
   {
     VkDebugUtilsMessengerCreateInfoEXT dbg_messenger_create_info{VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT};
-    dbg_messenger_create_info.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT       // For debug printf
-                                                | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT  // GPU info, bug
-                                                | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;   // Invalid usage
-    dbg_messenger_create_info.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT            // Other
-                                            | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT       // Violation of spec
-                                            | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;     // Non-optimal use
+    dbg_messenger_create_info.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT;  // For debug printf
+        // | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT  // GPU info, bug
+        // | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;   // Invalid usage
+    dbg_messenger_create_info.messageType =
+        // VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT;  // Other
+        VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT;  // Violation of spec
+    // | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;     // Non-optimal use
     dbg_messenger_create_info.pfnUserCallback = debugMessengerCallback;
     dbg_messenger_create_info.pUserData       = this;
     NVVK_CHECK(m_createDebugUtilsMessengerEXT(m_instance, &dbg_messenger_create_info, nullptr, &m_dbgMessenger));

@@ -494,7 +494,9 @@ private:
   VkDebugUtilsMessengerEXT            m_dbgMessenger                  = nullptr;
 
   std::unordered_set<int32_t> m_dbgIgnoreMessages;
-  uint32_t m_dbgSeverity{VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT};
+  uint32_t m_dbgSeverity{
+    VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT |
+    VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT};
 
   // nSight Aftermath
   GpuCrashTracker m_gpuCrashTracker;
