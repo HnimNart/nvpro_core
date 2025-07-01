@@ -7,10 +7,10 @@
 include_guard(GLOBAL)
 
 # Check for obsolete folders to remove
-if(EXISTS ${BASE_DIRECTORY}/shared_sources)
+if(EXISTS ${LIB_DIRECTORY}/shared_sources)
   message(WARNING "shared_sources got renamed as nvpro_core. Please remove shared_sources")
 endif()
-if(EXISTS ${BASE_DIRECTORY}/shared_external)
+if(EXISTS ${LIB_DIRECTORY}/shared_external)
   message(WARNING "Please remove shared_external folder : folder obsolete, now")
 endif()
 
@@ -78,23 +78,24 @@ if(UNIX)
     add_definitions(-D_GLIBCXX_USE_CXX11_ABI=0)
 endif()
 
-set(RESOURCE_DIRECTORY "${BASE_DIRECTORY}/nvpro_core/resources")
+set(RESOURCE_DIRECTORY "${LIB_DIRECTORY}/nvpro_core/resources")
 add_definitions(-DRESOURCE_DIRECTORY="${RESOURCE_DIRECTORY}/")
 
-include_directories(${BASE_DIRECTORY}/nvpro_core)
-include_directories(${BASE_DIRECTORY}/nvpro_core/nvp)
+include_directories(${LIB_DIRECTORY}/nvpro_core)
+include_directories(${LIB_DIRECTORY}/nvpro_core/nvp)
 
 # Specify the list of directories to search for cmake modules.
-list(APPEND CMAKE_MODULE_PATH ${BASE_DIRECTORY}/nvpro_core/cmake ${BASE_DIRECTORY}/nvpro_core/cmake/find)
+list(APPEND CMAKE_MODULE_PATH ${LIB_DIRECTORY}/nvpro_core/cmake ${LIB_DIRECTORY}/nvpro_core/cmake/find)
 set(CMAKE_FIND_ROOT_PATH "")
 
-message(STATUS "BASE_DIRECTORY = ${BASE_DIRECTORY}")
+message(STATUS "BUILD_DIRECTORY = ${BUILD_DIRECTORY}")
+message(STATUS "LIB_DIRECTORY = ${LIB_DIRECTORY}")
 message(STATUS "CMAKE_CURRENT_SOURCE_DIR = ${CMAKE_CURRENT_SOURCE_DIR}")
 
 set(ARCH "x64" CACHE STRING "CPU Architecture")
 
 if(NOT OUTPUT_PATH)
-  set(OUTPUT_PATH ${BASE_DIRECTORY}/bin_${ARCH} CACHE PATH "Directory where outputs will be stored")
+  set(OUTPUT_PATH ${BUILD_DIRECTORY}/bin_${ARCH} CACHE PATH "Directory where outputs will be stored")
 endif()
 
 # Set the default build to Release.  Note this doesn't do anything for the VS
@@ -103,18 +104,18 @@ if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build, options are: Debug Release RelWithDebInfo MinSizeRel." FORCE)
 endif()
 
-if(NOT EXISTS ${BASE_DIRECTORY}/downloaded_resources)
-  file(MAKE_DIRECTORY ${BASE_DIRECTORY}/downloaded_resources)
+if(NOT EXISTS ${LIB_DIRECTORY}/downloaded_resources)
+  file(MAKE_DIRECTORY ${LIB_DIRECTORY}/downloaded_resources)
 endif()
 
-set(DOWNLOAD_TARGET_DIR "${BASE_DIRECTORY}/downloaded_resources")
+set(DOWNLOAD_TARGET_DIR "${LIB_DIRECTORY}/downloaded_resources")
 set(DOWNLOAD_SITE http://developer.download.nvidia.com/ProGraphics/nvpro-samples)
 
 #####################################################################################
 
 macro(_add_project_definitions name)
   if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-    set(CMAKE_INSTALL_PREFIX "${BASE_DIRECTORY}/_install" CACHE PATH "folder in which INSTALL will put everything needed to run the binaries" FORCE)
+    set(CMAKE_INSTALL_PREFIX "${LIB_DIRECTORY}/_install" CACHE PATH "folder in which INSTALL will put everything needed to run the binaries" FORCE)
   endif(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
   if(CUDA_TOOLKIT_ROOT_DIR)
     string(REPLACE "\\" "/" CUDA_TOOLKIT_ROOT_DIR ${CUDA_TOOLKIT_ROOT_DIR})
@@ -122,13 +123,13 @@ macro(_add_project_definitions name)
   if(CMAKE_INSTALL_PREFIX)
     string(REPLACE "\\" "/" CMAKE_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX})
   endif()
-  
+
   # the "config" directory doesn't really exist but serves as place holder
   # for the actual CONFIG based directories (Release, RelWithDebInfo etc.)
   file(RELATIVE_PATH TO_CURRENT_SOURCE_DIR "${OUTPUT_PATH}/config" "${CMAKE_CURRENT_SOURCE_DIR}")
   file(RELATIVE_PATH TO_DOWNLOAD_TARGET_DIR "${OUTPUT_PATH}/config" "${DOWNLOAD_TARGET_DIR}")
-  file(RELATIVE_PATH TO_NVPRO_CORE_DIR "${OUTPUT_PATH}/config" "${BASE_DIRECTORY}/nvpro_core")
-  
+  file(RELATIVE_PATH TO_NVPRO_CORE_DIR "${OUTPUT_PATH}/config" "${LIB_DIRECTORY}/nvpro_core")
+
   add_definitions(-DPROJECT_NAME="${name}")
   add_definitions(-DPROJECT_RELDIRECTORY="${TO_CURRENT_SOURCE_DIR}/")
   add_definitions(-DPROJECT_DOWNLOAD_RELDIRECTORY="${TO_DOWNLOAD_TARGET_DIR}/")
@@ -157,7 +158,7 @@ macro(_set_subsystem_windows exename)
 endmacro(_set_subsystem_windows)
 
 #####################################################################################
-if(UNIX) 
+if(UNIX)
   set(OS "linux")
   add_definitions(-DLINUX)
 else(UNIX)
@@ -225,10 +226,10 @@ endmacro()
 #  SOURCE_DIR  : folder on server, if not present 'scenes'
 #
 # Examples:
-# download_files(FILENAMES sample1.zip EXTRACT) 
+# download_files(FILENAMES sample1.zip EXTRACT)
 # download_files(FILENAMES env.hdr)
-# download_files(FILENAMES zlib.zip EXTRACT TARGET_DIR ${BASE_DIRECTORY}/blah SOURCE_DIR /libraries NOINSTALL) 
-# 
+# download_files(FILENAMES zlib.zip EXTRACT TARGET_DIR ${LIB_DIRECTORY}/blah SOURCE_DIR /libraries NOINSTALL)
+#
 function(download_files)
   set(options EXTRACT NOINSTALL)
   set(oneValueArgs INSTALL_DIR SOURCE_DIR TARGET_DIR)
@@ -252,7 +253,7 @@ function(download_files)
   foreach(_DOWNLOAD_IDX RANGE ${_DOWNLOAD_IDX_MAX})
     list(GET DOWNLOAD_FILES_FILENAMES ${_DOWNLOAD_IDX} FILENAME)
     set(_TARGET_FILENAME ${DOWNLOAD_FILES_TARGET_DIR}/${FILENAME})
-    
+
     set(_DO_DOWNLOAD ON)
     if(EXISTS ${_TARGET_FILENAME})
       file(SIZE ${_TARGET_FILENAME} _FILE_SIZE)
@@ -260,7 +261,7 @@ function(download_files)
         set(_DO_DOWNLOAD OFF)
       endif()
     endif()
-    
+
     if(_DO_DOWNLOAD)
       if(DOWNLOAD_FILES_URLS AND (_NUM_DOWNLOADS GREATER 1)) # One URL per file
         list(GET DOWNLOAD_FILES_URLS ${_DOWNLOAD_IDX} _DOWNLOAD_URLS)
@@ -341,7 +342,7 @@ function(download_package)
   set(oneValueArgs NAME VERSION LOCATION)
   set(multiValueArgs URLS)
   cmake_parse_arguments(DOWNLOAD_PACKAGE "" "${oneValueArgs}" "${multiValueArgs}" ${ARGN} )
-  
+
   set(_TARGET_DIR ${CMAKE_BINARY_DIR}/_deps/${DOWNLOAD_PACKAGE_NAME}-${DOWNLOAD_PACKAGE_VERSION})
   if(EXISTS ${_TARGET_DIR})
     # An empty directory is not a valid cache entry; that usually indicates
@@ -353,7 +354,7 @@ function(download_package)
       return()
     endif()
   endif()
-  
+
   # Cache couldn't be used. Download the package:
   if(DOWNLOAD_PACKAGE_URLS)
     set(_URLS ${DOWNLOAD_PACKAGE_URLS})
@@ -368,7 +369,7 @@ function(download_package)
   )
   # Save some space by cleaning up the archive we extracted from.
   file(REMOVE ${_TARGET_DIR}/${DOWNLOAD_PACKAGE_NAME}.zip)
-  
+
   set(${DOWNLOAD_PACKAGE_LOCATION} ${_TARGET_DIR} PARENT_SCOPE)
 endfunction()
 
@@ -376,7 +377,7 @@ endfunction()
 # Optional OpenGL package
 #
 macro(_add_package_OpenGL)
-  find_package(OpenGL)  
+  find_package(OpenGL)
   if(OPENGL_FOUND)
       Message(STATUS "--> using package OpenGL")
       get_directory_property(hasParent PARENT_DIRECTORY)
@@ -429,7 +430,7 @@ endmacro()
 # Optional OptiX7 package
 #
 macro(_add_package_Optix7)
-  find_package(Optix7)  
+  find_package(Optix7)
   if(OPTIX7_FOUND)
       Message(STATUS "--> using package OptiX7")
       add_definitions(-DNVP_SUPPORTS_OPTIX7)
@@ -484,7 +485,7 @@ macro(_add_package_VulkanSDK)
 
       Message(STATUS "--> using Vulkan Headers from: ${vulkanHeaderDir}")
       include_directories(${vulkanHeaderDir})
-      set( vulkanHeaderFiles 
+      set( vulkanHeaderFiles
         "${vulkanHeaderDir}/vulkan/vulkan_core.h")
       LIST(APPEND PACKAGE_SOURCE_FILES ${vulkanHeaderFiles})
       source_group(Vulkan FILES ${vulkanHeaderFiles})
@@ -557,13 +558,13 @@ macro(_add_package_ShaderC)
 
   if(Vulkan_FOUND AND (Vulkan_shaderc_shared_LIBRARY OR NVSHADERC_LIB))
       Message(STATUS "--> using package ShaderC")
-      
+
       add_definitions(-DNVP_SUPPORTS_SHADERC)
       if (NVSHADERC_LIB)
         Message(STATUS "--> using NVShaderC LIB")
         add_definitions(-DNVP_SUPPORTS_NVSHADERC)
       endif()
-      
+
       if (NVSHADERC_LIB)
         LIST(APPEND LIBRARIES_OPTIMIZED ${NVSHADERC_LIB})
         LIST(APPEND LIBRARIES_DEBUG ${NVSHADERC_LIB})
@@ -578,7 +579,7 @@ macro(_add_package_ShaderC)
       endif()
   else()
       Message(STATUS "--> NOT using package ShaderC")
-  endif() 
+  endif()
 endmacro(_add_package_ShaderC)
 # this macro is needed for the samples to add this package, although not needed
 # this happens when the nvpro_core library was built with these stuff in it
@@ -602,8 +603,8 @@ macro(_add_package_DirectX12)
       set( USING_DIRECTX12 "YES")
     endif()
     add_definitions(-DNVP_SUPPORTS_DIRECTX12)
-    include_directories(${BASE_DIRECTORY}/nvpro_core/third_party/dxc/Include)
-    include_directories(${BASE_DIRECTORY}/nvpro_core/third_party/dxh/include/directx)
+    include_directories(${LIB_DIRECTORY}/nvpro_core/third_party/dxc/Include)
+    include_directories(${LIB_DIRECTORY}/nvpro_core/third_party/dxh/include/directx)
     LIST(APPEND LIBRARIES_OPTIMIZED dxgi.lib d3d12.lib)
     LIST(APPEND LIBRARIES_DEBUG dxgi.lib d3d12.lib)
   endif()
@@ -707,7 +708,7 @@ macro(_add_package_NVAPI)
     set(_NVAPI_LIB "${NVAPI_LOCATION}/amd64/nvapi64.lib")
     list(APPEND LIBRARIES_OPTIMIZED ${_NVAPI_LIB})
     list(APPEND LIBRARIES_DEBUG ${_NVAPI_LIB})
-  
+
     get_directory_property(hasParent PARENT_DIRECTORY)
     if(hasParent)
       set( USING_NVAPI "YES" PARENT_SCOPE)
@@ -738,7 +739,7 @@ macro(_add_package_NVML)
     include_directories(${NVML_INCLUDE_DIRS})
     LIST(APPEND LIBRARIES_OPTIMIZED ${NVML_LIBRARIES})
     LIST(APPEND LIBRARIES_DEBUG ${NVML_LIBRARIES})
-    
+
     get_directory_property(hasParent PARENT_DIRECTORY)
     if(hasParent)
       set( USING_NVML "YES" PARENT_SCOPE)
@@ -781,7 +782,7 @@ macro(_add_package_NsightAftermath)
     endif(NsightAftermath_FOUND)
   endif(SUPPORT_AFTERMATH)
 
-  list(APPEND COMMON_SOURCE_FILES "${BASE_DIRECTORY}/nvpro_core/nvvk/nsight_aftermath_vk.cpp")
+  list(APPEND COMMON_SOURCE_FILES "${LIB_DIRECTORY}/nvpro_core/nvvk/nsight_aftermath_vk.cpp")
 
 endmacro(_add_package_NsightAftermath)
 
@@ -797,10 +798,10 @@ endmacro(_add_package_NsightAftermath)
 macro(_add_package_KTX)
   # Zlib
   _add_package_ZLIB()
-  
+
   message(STATUS "--> using package Zstd (from KTX)")
   message(STATUS "--> using package basisu (from KTX)")
-  
+
   get_directory_property(hasParent PARENT_DIRECTORY)
   if(hasParent)
     set( USING_ZSTD "YES" PARENT_SCOPE)
@@ -825,19 +826,19 @@ macro(_add_package_Omniverse)
   find_package(OmniClient REQUIRED)
   find_package(USD)
   find_package(KitSDK)
-  
-  set(Python3_ROOT_DIR "${BASE_DIRECTORY}/nvpro_core/OV/downloaded/python")
+
+  set(Python3_ROOT_DIR "${LIB_DIRECTORY}/nvpro_core/OV/downloaded/python")
   # Stop looking fore newer versions in other locations
   set(Python3_FIND_STRATEGY LOCATION)
   # On Windows, ignore a potentially preinstalled newer version of Python
   set(Python3_FIND_REGISTRY NEVER)
 
   find_package(Python3 3.7 EXACT REQUIRED COMPONENTS Development Interpreter)
-  
+
   #message("Python3_ROOT_DIR " ${Python3_ROOT_DIR})
-  
+
   add_compile_definitions(TBB_USE_DEBUG=0)
-  
+
 endmacro()
 
 # this macro is needed for the samples to add this package, although not needed
@@ -858,7 +859,7 @@ function(nvcuda_compile_ptx)
   set(oneValueArgs TARGET_PATH GENERATED_FILES)
   set(multiValueArgs NVCC_OPTIONS SOURCES)
   CMAKE_PARSE_ARGUMENTS(NVCUDA_COMPILE_PTX "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
-  
+
   #Message(STATUS "${NVCUDA_COMPILE_PTX} ${options} ${oneValueArgs} ${multiValueArgs} ")
 
   # Match the bitness of the ptx to the bitness of the application
@@ -866,15 +867,15 @@ function(nvcuda_compile_ptx)
   if( CMAKE_SIZEOF_VOID_P EQUAL 8)
     set( MACHINE "--machine=64" )
   endif()
-  
+
   # Custom build rule to generate ptx files from cuda files
   FOREACH( input ${NVCUDA_COMPILE_PTX_SOURCES} )
     get_filename_component( input_we ${input} NAME_WE )
-    
+
     # generate the *.ptx files inside "ptx" folder inside the executable's output directory.
     set( output "${NVCUDA_COMPILE_PTX_TARGET_PATH}/${input_we}.ptx" )
     LIST( APPEND PTX_FILES  ${output} )
-    
+
     add_custom_command(
       OUTPUT  ${output}
       DEPENDS ${input}
@@ -883,7 +884,7 @@ function(nvcuda_compile_ptx)
       COMMAND ${CMAKE_COMMAND} -E echo ${NVCUDA_COMPILE_PTX_TARGET_PATH}
     )
   ENDFOREACH( )
-  
+
   set(${NVCUDA_COMPILE_PTX_GENERATED_FILES} ${PTX_FILES} PARENT_SCOPE)
 endfunction()
 
@@ -896,7 +897,7 @@ function(nvcuda_compile_cubin)
   set(oneValueArgs TARGET_PATH GENERATED_FILES)
   set(multiValueArgs NVCC_OPTIONS SOURCES)
   CMAKE_PARSE_ARGUMENTS(NVCUDA_COMPILE_CUBIN "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
-  
+
   #Message(STATUS "${NVCUDA_COMPILE_CUBIN} ${options} ${oneValueArgs} ${multiValueArgs} ")
 
   # Match the bitness of the cubin to the bitness of the application
@@ -904,33 +905,33 @@ function(nvcuda_compile_cubin)
   if( CMAKE_SIZEOF_VOID_P EQUAL 8)
     set( MACHINE "--machine=64" )
   endif()
-  
+
   # Custom build rule to generate cubin files from cuda files
   FOREACH( input ${NVCUDA_COMPILE_CUBIN_SOURCES} )
     get_filename_component( input_we ${input} NAME_WE )
-    
+
     # generate the *.cubin files inside "cubin" folder inside the executable's output directory.
     set( output "${NVCUDA_COMPILE_CUBIN_TARGET_PATH}/${input_we}.cubin" )
     LIST( APPEND CUBIN_FILES  ${output} )
-    
+
     add_custom_command(
       OUTPUT  ${output}
       DEPENDS ${input}
-      COMMAND ${CMAKE_COMMAND} -E echo ${CUDAToolkit_NVCC_EXECUTABLE} ${MACHINE} --cubin ${NVCUDA_COMPILE_CUBIN_NVCC_OPTIONS} ${input} -o ${output} 
-      COMMAND ${CUDAToolkit_NVCC_EXECUTABLE} ${MACHINE} --cubin ${NVCUDA_COMPILE_CUBIN_NVCC_OPTIONS} ${input} -o ${output} 
+      COMMAND ${CMAKE_COMMAND} -E echo ${CUDAToolkit_NVCC_EXECUTABLE} ${MACHINE} --cubin ${NVCUDA_COMPILE_CUBIN_NVCC_OPTIONS} ${input} -o ${output}
+      COMMAND ${CUDAToolkit_NVCC_EXECUTABLE} ${MACHINE} --cubin ${NVCUDA_COMPILE_CUBIN_NVCC_OPTIONS} ${input} -o ${output}
       WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
     )
   ENDFOREACH( )
-  
+
   set(${NVCUDA_COMPILE_CUBIN_GENERATED_FILES} ${CUBIN_FILES} PARENT_SCOPE)
 endfunction()
 
 #####################################################################################
-# Macro to setup output directories 
+# Macro to setup output directories
 macro(_set_target_output _PROJNAME)
   set_target_properties(${_PROJNAME}
     PROPERTIES
-    # Will use default output for .lib files not to "polute" 
+    # Will use default output for .lib files not to "polute"
     # the root smaple binary directory with .lib or .exp files
     #ARCHIVE_OUTPUT_DIRECTORY "${OUTPUT_PATH}/$<CONFIG>/"
     LIBRARY_OUTPUT_DIRECTORY "${OUTPUT_PATH}/$<CONFIG>/"
@@ -1042,34 +1043,34 @@ endmacro()
 # used by the samples via _add_nvpro_core_lib and by nvpro_core
 #
 macro(_process_shared_cmake_code)
-  
+
   set(PLATFORM_LIBRARIES)
-  
+
   if (USING_DIRECTX11)
     LIST(APPEND PLATFORM_LIBRARIES ${DX11SDK_D3D_LIBRARIES})
   endif()
-  
+
   if (USING_DIRECTX12)
     LIST(APPEND PLATFORM_LIBRARIES ${DX12SDK_D3D_LIBRARIES})
   endif()
-  
+
   if (USING_OPENGL)
     LIST(APPEND PLATFORM_LIBRARIES ${OPENGL_LIBRARY})
   endif()
-  
+
   if (USING_VULKANSDK)
     LIST(APPEND PLATFORM_LIBRARIES ${Vulkan_LIBRARIES})
   endif()
-  
+
   set(COMMON_SOURCE_FILES)
   LIST(APPEND COMMON_SOURCE_FILES
-      ${BASE_DIRECTORY}/nvpro_core/nvp/resources.h
-      ${BASE_DIRECTORY}/nvpro_core/nvp/resources.rc
+      ${LIB_DIRECTORY}/nvpro_core/nvp/resources.h
+      ${LIB_DIRECTORY}/nvpro_core/nvp/resources.rc
       # Add this cpp file into the individual projects such that each one gets a unique g_ProjectName definition
       # This will allow to move more nvpro_core code relying on PROJECT_NAME into .cpp files.
-      ${BASE_DIRECTORY}/nvpro_core/nvp/perproject_globals.cpp
+      ${LIB_DIRECTORY}/nvpro_core/nvp/perproject_globals.cpp
   )
-   
+
   if(UNIX)
     LIST(APPEND PLATFORM_LIBRARIES "Xxf86vm")
 
@@ -1098,12 +1099,12 @@ macro(_add_nvpro_core_lib)
   # now we have added some packages, we can guess more
   # on what is needed overall for the shared library
 
-  # build_all adds individual samples, and then at the end 
-  # the nvpro_core itself, otherwise we build a single 
+  # build_all adds individual samples, and then at the end
+  # the nvpro_core itself, otherwise we build a single
   # sample which does need nvpro_core added here
 
   if(NOT HAS_NVPRO_CORE)
-    add_subdirectory(${BASE_DIRECTORY}/nvpro_core ${CMAKE_BINARY_DIR}/nvpro_core)
+    add_subdirectory(${LIB_DIRECTORY}/nvpro_core ${CMAKE_BINARY_DIR}/nvpro_core)
   endif()
 
   #-----------------------------------------------------------------------------------
@@ -1173,7 +1174,7 @@ function(target_copy_to_output_dir)
                 TARGET ${TARGET_COPY_TO_OUTPUT_DIR_TARGET} POST_BUILD
                 COMMAND ${CMAKE_COMMAND} -E copy_directory ${_SOURCE_FILE} $<TARGET_FILE_DIR:${TARGET_COPY_TO_OUTPUT_DIR_TARGET}>/${TARGET_COPY_TO_OUTPUT_DIR_DEST_SUBFOLDER}${_FOLDER_PATH}
             )
-        else()   
+        else()
             if(MDL_LOG_FILE_DEPENDENCIES)
                 MESSAGE(STATUS "- file to copy:   ${_SOURCE_FILE}")
             endif()
